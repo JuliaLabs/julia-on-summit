@@ -1,0 +1,32 @@
+#!/bin/bash
+# Begin LSF Directives
+#BSUB -P GEN126
+#BSUB -W 0:15
+#BSUB -nnodes 1
+#BSUB -J prof
+#BSUB -o out.%J
+#BSUB -e out.%J
+
+
+# Updating PATH with Julia build
+PATH=/PATH/TO/julia-1.2.0-rc1/bin:$PATH
+
+# Loading appropriate modules
+module load lsf-tools/2.0 DefApps gcc/6.4.0 spectrum-mpi/10.2.0.11-20190201 cuda/9.2.148 git spectrum-mpi
+
+# Building Julia outside of jsrun command to avoid read-only filesystem errors
+echo "Preparing environment..."
+julia -e 'using Pkg; Pkg.API.precompile()'
+julia -e 'using CUDAnative; CUDAnative.load_runtime.(CUDAnative.target_support); using MPI; using CUDAdrv; using CuArrays'
+echo
+
+# specifying scratch directory for output
+SCRATCH=/gpfs/wolf/gen126/scratch/$USER
+
+# jsrun command, --smpiargs="-gpu -x PAMI_DISABLE_IPC=1" allows for cuda-aware MPI
+#     Note: on summit, simply use: --smpiargs="-gpu"
+jsrun -n 2 -r 2 -a 1 -g 1 -c 7 --smpiargs="-gpu -x PAMI_DISABLE_IPC=1" julia file.jl
+
+# Transfer output back after run
+mv $SCRATCH/output .
+
