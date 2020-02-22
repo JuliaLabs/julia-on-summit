@@ -2,6 +2,8 @@ using BinaryBuilder
 
 const mappings = Dict(
     "OpenBLAS" => "julia",
+    "SuiteSparse" => "julia",
+    "HDF5" => "hdf5",
     )
 
 # okay this is stupid, but Overrides.toml path
@@ -17,7 +19,21 @@ const JULIA_PRIVATE_LIBDIR = joinpath(JULIA_PRIVATE, "lib")
 
 mkpath(JULIA_PRIVATE)
 rm(JULIA_PRIVATE_LIBDIR, force=true)
-run(`ln -s $VENDORED $JULIA_PRIVATE_LIBDIR`)
+symlink(VENDORED, JULIA_PRIVATE_LIBDIR)
+
+const LMOD = ENV["LMOD_CMD"]
+
+function lmod(name)
+  lines = readlines(`$LMOD --redirect show $name`)
+  for line in lines
+      m = match(r"LD_LIBRARY_PATH\\\",\\\"(.*)\\\"", line)
+      if m !== nothing
+          return dirname(m.captures[1])
+      end
+  end
+  return nothing
+end
+
 
 open("Overrides.toml", "w") do io
     for (lib, map) in mappings
@@ -26,8 +42,11 @@ open("Overrides.toml", "w") do io
         if map == "julia"
             path = JULIA_PRIVATE        
         else
-            # TODO: Query spack/module to find the correct path.
-            path = map
+            path = lmod(map)
+        end
+        if path === nothing
+            @warn "Could not map lib; Skipping" lib map
+            continue
         end
 
         println(io, "[", uuid, "]")
