@@ -3,7 +3,7 @@ Instructions and scripts to run Julia on Summit
 
 ## Compiling Julia
 
-Currently Julia supports PowerPC on Julia 1.2 or the master branch
+Currently Julia supports PowerPC on Julia 1.2 and above.
 
 1. Download the Julia source code and configure the out-of-tree build.
 
@@ -24,7 +24,6 @@ make O=$HOME/builds/julia configure
 cd $HOME/builds/julia
 cat <<EOF > Make.user
 USE_BINARYBUILDER=0
-# LLVM_VER=8.0.0 # optional
 EOF
 ```
 
@@ -53,6 +52,15 @@ add_property("state","experimental")
 prepend_path("PATH","${PREFIX}/bin")
 EOF
 ```
+
+## Julia 1.3+
+
+Julia 1.3 started using [Artifacts](https://julialang.github.io/Pkg.jl/v1.3/artifacts/). These are prebuilt binaries for dependencies,
+to provide a transparent and user-friendly way to develiver binary dependencies. The buildservice for PowerPC has as a lowest common
+denominator GLIBC v2.25. As of writing most IBM based supercomputers are configured with a RedHat 7.X system (including Summit),
+which has a GLIBC v2.17. (See `ldd --version`). Due that we can not use `Artifacts` on Julia 1.3+
+
+Luckily Julia has an override mechanism that we can use to substitute artifacts with system provided versions.
 
 
 
