@@ -6,6 +6,8 @@ const mappings = Dict(
     "HDF5" => "hdf5",
     )
 
+# Arpack and OpenSpecFun currently load just fine
+
 # okay this is stupid, but Overrides.toml path
 # need to be able to append a `lib/libraryname.so`
 #
@@ -21,9 +23,13 @@ mkpath(JULIA_PRIVATE)
 rm(JULIA_PRIVATE_LIBDIR, force=true)
 symlink(VENDORED, JULIA_PRIVATE_LIBDIR)
 
-const LMOD = ENV["LMOD_CMD"]
+
+const LMOD = get(ENV, "LMOD_CMD", nothing)
 
 function lmod(name)
+  if LMOD === nothing
+      return nothing
+  end
   lines = readlines(`$LMOD --redirect show $name`)
   for line in lines
       m = match(r"LD_LIBRARY_PATH\\\",\\\"(.*)\\\"", line)
@@ -44,6 +50,7 @@ open("Overrides.toml", "w") do io
         else
             path = lmod(map)
         end
+
         if path === nothing
             @warn "Could not map lib; Skipping" lib map
             continue
