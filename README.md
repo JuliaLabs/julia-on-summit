@@ -60,7 +60,9 @@ to provide a transparent and user-friendly way to develiver binary dependencies.
 denominator GLIBC v2.25. As of writing most IBM based supercomputers are configured with a RedHat 7.X system (including Summit),
 which has a GLIBC v2.17. (See `ldd --version`). Due that we can not use `Artifacts` on Julia 1.3+
 
-Luckily Julia has an override mechanism that we can use to substitute artifacts with system provided versions.
+Luckily Julia has an override mechanism that we can use to substitute artifacts with system provided versions. See the `gen_overrides.jl`
+script on how to create a list of overrides for the packages you are interested in. The generated `Overrides.toml` should be placed in one
+of the depots in `Base.DEPOT_PATH`, at `artifcats/Overrides.toml`.
 
 
 
