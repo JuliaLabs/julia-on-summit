@@ -9,7 +9,7 @@ mkpath(OVERRIDES)
 
 function install_link(linkname, target)
     path = joinpath(OVERRIDES, linkname)
-    @show mkpath(basename(path))
+    mkpath(dirname(path))
     rm(path, force=true)
     symlink(target, path)
     prefix
