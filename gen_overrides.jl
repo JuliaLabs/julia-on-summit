@@ -3,7 +3,7 @@ using JSON
 VENDORED = joinpath(Sys.BINDIR, Base.PRIVATE_LIBDIR)
 JULIA_PRIVATE = abspath(Sys.BINDIR, "..", "local", "share", "julia")
 ARTIFACTS = joinpath(JULIA_PRIVATE, "artifacts") 
-OVERRIDES = joinpath(JULIA_ARTIFACTS, "overrides")
+OVERRIDES = joinpath(ARTIFACTS, "overrides")
 
 mkpath(OVERRIDES)
 
@@ -31,9 +31,17 @@ uuids = library["uuids"]
 
 if isfile("library.json")
     paths = JSON.Parser.parsefile("library.json")
+
+    if hasekey(paths, "CompilerSupportLibraries")
+        csl = paths["CompilerSupportLibraries"]
+        install_link(joinpath("gcc/lib"), csl)
+        OVERRIDE_MAP["CompilerSupportLibraries"] = joinpath(OVERRIDES, "gcc")
+        delete!(paths, "CompilerSupportLibraries")
+    end
+
     merge!(OVERRIDE_MAP, paths)
 else
-    @warn "library.json not present run collect_lmods.jl"
+    @warn "library.json not present, run collect_lmods.jl"
 end
 
 open(joinpath(ARTIFACTS, "Overrides.toml"), "w") do io

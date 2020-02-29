@@ -2,6 +2,8 @@ using JSON
 library = JSON.Parser.parsefile("library.json")
 mappings = library["mappings"]
 
+const LMOD = get(ENV, "LMOD_CMD", nothing)
+
 function lmod(name)
   if LMOD === nothing
       return nothing
@@ -28,7 +30,7 @@ for (lib, map) in mappings
     paths[lib] = path
 end
 open("paths.json", "w") do io
-    write(io, json(paths)
+    write(io, json(paths))
 end
 
 

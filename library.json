@@ -2,9 +2,13 @@
     "mappings": {
         "OpenBLAS": "julia",
         "SuiteSparse": "julia",
+        "HDF5": "hdf5",
+        "CompilerSupportLibraries": "gcc"
     },
     "uuids": {
         "OpenBLAS": "4536629a-c528-5b80-bd46-f80d51c5b363",
-        "SuiteSparse": "bea87d4a-7f5b-5778-9afe-8cc45184846c"
+        "SuiteSparse": "bea87d4a-7f5b-5778-9afe-8cc45184846c",
+        "HDF5": "0234f1f7-429e-5d53-9886-15a909be8d59",
+        "CompilerSupportLibraries": "e66e0078-7015-5450-92f7-15fbd957f2ae"
     }
 }
