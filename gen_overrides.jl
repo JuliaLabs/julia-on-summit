@@ -7,10 +7,11 @@ OVERRIDES = joinpath(ARTIFACTS, "overrides")
 
 mkpath(OVERRIDES)
 
-function install_link(prefix, target)
-    prefix = joinpath(OVERRIDES, prefix)
-    rm(prefix, force=true)
-    symlink(target, prefix)
+function install_link(linkname, target)
+    path = joinpath(OVERRIDES, linkname)
+    @show mkpath(basename(path))
+    rm(path, force=true)
+    symlink(target, path)
     prefix
 end
 
@@ -19,7 +20,7 @@ end
 #
 # The julia vendored librarys are at `joinpath(Sys.BINDIR, Base.PRIVATE_LIBDIR)`
 # so we need to create a symlink to that.
-install_link(joinpath("julia/lib"), VENDORED)
+install_link(joinpath("julia","lib"), VENDORED)
 JULIA_OVERRIDE = joinpath(OVERRIDES, "julia")
 
 const OVERRIDE_MAP = Dict(
@@ -34,7 +35,7 @@ if isfile("library.json")
 
     if hasekey(paths, "CompilerSupportLibraries")
         csl = paths["CompilerSupportLibraries"]
-        install_link(joinpath("gcc/lib"), csl)
+        install_link(joinpath("gcc", "lib"), joinpath(csl, "lib64"))
         OVERRIDE_MAP["CompilerSupportLibraries"] = joinpath(OVERRIDES, "gcc")
         delete!(paths, "CompilerSupportLibraries")
     end
