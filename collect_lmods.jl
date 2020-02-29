@@ -27,7 +27,7 @@ for (lib, map) in mappings
         @warn "Could not map lib; Skipping" lib map
         continue
     end
-    paths[lib] = path
+    paths[map] = path
 end
 open("paths.json", "w") do io
     write(io, json(paths))

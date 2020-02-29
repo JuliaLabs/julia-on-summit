@@ -12,7 +12,7 @@ function install_link(linkname, target)
     mkpath(dirname(path))
     rm(path, force=true)
     symlink(target, path)
-    prefix
+    return path
 end
 
 # okay this is stupid, but Overrides.toml path
@@ -23,31 +23,33 @@ end
 install_link(joinpath("julia","lib"), VENDORED)
 JULIA_OVERRIDE = joinpath(OVERRIDES, "julia")
 
-const OVERRIDE_MAP = Dict(
+const OVERRIDE_MAP = Dict{String, String}(
     "julia" => JULIA_OVERRIDE,
 )
 library = JSON.Parser.parsefile("library.json")
 mappings = library["mappings"]
 uuids = library["uuids"]
 
-if isfile("library.json")
-    paths = JSON.Parser.parsefile("library.json")
+if isfile("paths.json")
+    paths = JSON.Parser.parsefile("paths.json")
 
-    if hasekey(paths, "CompilerSupportLibraries")
-        csl = paths["CompilerSupportLibraries"]
+    # CompilerSupportLibraries
+    if haskey(paths, "gcc")
+        csl = paths["gcc"]
         install_link(joinpath("gcc", "lib"), joinpath(csl, "lib64"))
-        OVERRIDE_MAP["CompilerSupportLibraries"] = joinpath(OVERRIDES, "gcc")
-        delete!(paths, "CompilerSupportLibraries")
+        install_link(joinpath("gcc", "bin"), joinpath(csl, "bin"))
+        OVERRIDE_MAP["gcc"] = joinpath(OVERRIDES, "gcc")
+        delete!(paths, "gcc")
     end
 
-    merge!(OVERRIDE_MAP, paths)
+    append!(OVERRIDE_MAP, paths)
 else
     @warn "library.json not present, run collect_lmods.jl"
 end
 
 open(joinpath(ARTIFACTS, "Overrides.toml"), "w") do io
     for (lib, map) in mappings
-        UUID = uuids[name]
+        UUID = uuids[lib]
         
         if !haskey(OVERRIDE_MAP, map)
             @warn "Could not map lib; Skipping" lib map
