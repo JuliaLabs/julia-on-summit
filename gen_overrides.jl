@@ -31,7 +31,7 @@ mappings = library["mappings"]
 uuids = library["uuids"]
 
 if isfile("paths.json")
-    paths = JSON.Parser.parsefile("paths.json")
+    paths = JSON.Parser.parsefile("paths.json", dicttype=Dict{String, String})
 
     # CompilerSupportLibraries
     if haskey(paths, "gcc")
