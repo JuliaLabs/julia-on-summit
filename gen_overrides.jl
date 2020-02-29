@@ -1,60 +1,50 @@
-using BinaryBuilder
+using JSON
 
-const mappings = Dict(
-    "OpenBLAS" => "julia",
-    "SuiteSparse" => "julia",
-    "HDF5" => "hdf5",
-    )
+VENDORED = joinpath(Sys.BINDIR, Base.PRIVATE_LIBDIR)
+JULIA_PRIVATE = abspath(Sys.BINDIR, "..", "local", "share", "julia")
+ARTIFACTS = joinpath(JULIA_PRIVATE, "artifacts") 
+OVERRIDES = joinpath(JULIA_ARTIFACTS, "overrides")
 
-# Arpack and OpenSpecFun currently load just fine
+mkpath(OVERRIDES)
+
+function install_link(prefix, target)
+    prefix = joinpath(OVERRIDES, prefix)
+    rm(prefix, force=true)
+    symlink(target, prefix)
+    prefix
+end
 
 # okay this is stupid, but Overrides.toml path
 # need to be able to append a `lib/libraryname.so`
 #
 # The julia vendored librarys are at `joinpath(Sys.BINDIR, Base.PRIVATE_LIBDIR)`
-# so we need to create a symlink...
-#
+# so we need to create a symlink to that.
+install_link(joinpath("julia/lib"), VENDORED)
+JULIA_OVERRIDE = joinpath(OVERRIDES, "julia")
 
-const VENDORED = joinpath(Sys.BINDIR, Base.PRIVATE_LIBDIR)
-const JULIA_PRIVATE = abspath(Sys.BINDIR, "..", "local", "share", "julia")
-const JULIA_PRIVATE_LIBDIR = joinpath(JULIA_PRIVATE, "lib")
+const OVERRIDE_MAP = Dict(
+    "julia" => JULIA_OVERRIDE,
+)
+library = JSON.Parser.parsefile("library.json")
+mappings = library["mappings"]
+uuids = library["uuids"]
 
-mkpath(JULIA_PRIVATE)
-rm(JULIA_PRIVATE_LIBDIR, force=true)
-symlink(VENDORED, JULIA_PRIVATE_LIBDIR)
-
-
-const LMOD = get(ENV, "LMOD_CMD", nothing)
-
-function lmod(name)
-  if LMOD === nothing
-      return nothing
-  end
-  lines = readlines(`$LMOD --redirect show $name`)
-  for line in lines
-      m = match(r"LD_LIBRARY_PATH\\\",\\\"(.*)\\\"", line)
-      if m !== nothing
-          return dirname(m.captures[1])
-      end
-  end
-  return nothing
+if isfile("library.json")
+    paths = JSON.Parser.parsefile("library.json")
+    merge!(OVERRIDE_MAP, paths)
+else
+    @warn "library.json not present run collect_lmods.jl"
 end
 
-
-open("Overrides.toml", "w") do io
+open(joinpath(ARTIFACTS, "Overrides.toml"), "w") do io
     for (lib, map) in mappings
-        uuid = BinaryBuilder.jll_uuid(string(lib, "_jll"))
-    
-        if map == "julia"
-            path = JULIA_PRIVATE        
-        else
-            path = lmod(map)
-        end
-
-        if path === nothing
+        UUID = uuids[name]
+        
+        if !haskey(OVERRIDE_MAP, map)
             @warn "Could not map lib; Skipping" lib map
             continue
         end
+        path = OVERRIDE_MAP[map]
 
         println(io, "[", uuid, "]")
         println(io, lib, " = \"", path, "\"")
