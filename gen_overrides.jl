@@ -42,7 +42,7 @@ if isfile("paths.json")
         delete!(paths, "gcc")
     end
 
-    append!(OVERRIDE_MAP, paths)
+    merge!(OVERRIDE_MAP, paths)
 else
     @warn "library.json not present, run collect_lmods.jl"
 end
